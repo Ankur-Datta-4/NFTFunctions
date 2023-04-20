@@ -71,9 +71,9 @@ contract Token {
         address userId
     ) external view returns (bool) {
         // require(tokens[tokenId].ownerId != address(0), false);
-        if (tokens[tokenId].ownerId != address(0)) {
-            return false;
-        }
+        // if (tokens[tokenId].ownerId != address(0)) {
+        //     return false;
+        // }
         if (tokens[tokenId].isDisabled) {
             return false;
         }
