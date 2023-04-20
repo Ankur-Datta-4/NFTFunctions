@@ -15,50 +15,53 @@ contract Token {
         string className;
         uint256 numTokens;
         string actionType;
+        uint256 initValue;
         uint256 changeValue;
         address creator;
     }
 
     mapping(uint256 => TokenData) public tokens;
     mapping(uint256 => Class) public classes;
-
+    uint256 public numClasses;
+    uint256 public numTokens;
     // Event to emit when a token is created
     event TokenCreated(uint256 tokenId, address ownerId, string name);
 
     // Function to create a token class
     function createTokenClass(
-        uint256 classId,
         string memory className,
-        uint256 numTokens,
+        uint256 totalTokens,
         string memory actionType,
+        uint256 initValue,
         uint256 changeValue,
         address creator
     ) external {
-        Class storage newClass = classes[classId];
+        Class storage newClass = classes[numClasses];
         newClass.className = className;
-        newClass.numTokens = numTokens;
+        newClass.numTokens = totalTokens;
         newClass.actionType = actionType;
+        newClass.initValue = initValue;
         newClass.changeValue = changeValue;
         newClass.creator = creator;
+        numClasses++;
     }
 
     // Function to create a token
-    function createToken(uint256 tokenId) external payable {
-        require(classes[tokenId].numTokens > 0, "Token class does not exist");
-        require(tokens[tokenId].ownerId == address(0), "Token already created");
+    function createToken(uint256 classId) external {
+        require(classes[classId].numTokens > 0, "Token class does not exist");
 
-        Class storage tokenClass = classes[tokenId];
-        require(msg.value >= tokenClass.changeValue, "Not enough Ether sent");
+        Class storage tokenClass = classes[classId];
+        // require(msg.value >= tokenClass.changeValue, "Not enough Ether sent");
 
-        TokenData storage newToken = tokens[tokenId];
+        TokenData storage newToken = tokens[numTokens];
         newToken.ownerId = msg.sender;
         newToken.creatorId = tokenClass.creator;
         newToken.name = tokenClass.className;
-        newToken.variableFieldValue = 0;
+        newToken.variableFieldValue = tokenClass.initValue;
         newToken.isDisabled = false;
 
-        emit TokenCreated(tokenId, msg.sender, tokenClass.className);
-
+        emit TokenCreated(numTokens, msg.sender, tokenClass.className);
+        numTokens++;
         tokenClass.numTokens--;
     }
 
@@ -67,8 +70,10 @@ contract Token {
         uint256 tokenId,
         address userId
     ) external view returns (bool) {
-        require(tokens[tokenId].ownerId != address(0), "Token does not exist");
-
+        // require(tokens[tokenId].ownerId != address(0), false);
+        if (tokens[tokenId].ownerId != address(0)) {
+            return false;
+        }
         if (tokens[tokenId].isDisabled) {
             return false;
         }
